@@ -19,4 +19,5 @@ opencv-python-headless
 # Utilities & Security
 requests==2.34.2
 pycryptodome==3.23.0
+qrcode
 
