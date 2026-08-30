@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JYOTI NIKETAN H.S SCHOOL</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+        .header-card {
+            background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.2);
+        }
+        .nav-section-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+        .nav-section-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .stat-card {
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        .stat-total { background: linear-gradient(45deg, #0d6efd, #00d4ff); }
+        .stat-top { background: linear-gradient(45deg, #198754, #20c997); }
+        .stat-fail { background: linear-gradient(45deg, #dc3545, #ff6b6b); }
+
+        /* Nested Marks Table Styling */
+        .marks-mini-table {
+            font-size: 12px;
+            margin: 0;
+            background-color: #fdfdfd;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+        }
+        .marks-mini-table th {
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        .marks-mini-table td {
+            padding: 4px 6px;
+            vertical-align: middle;
+        }
+
+        /* Main Table Styling */
+        .main-table thead {
+            background-color: #212529;
+            color: white;
+        }
+        .main-table th {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .main-card { box-shadow: none; padding: 0 !important; }
+        }
+    </style>
+</head>
+<body class="p-2 p-md-4">
+
+<div class="container main-card p-3 p-md-4 my-2">
+
+    <!-- Login / Logout Header Buttons -->
+    <div class="text-end mb-3 no-print">
+        {% if session.get('is_authenticated') %}
+            <span class="badge bg-success me-2 px-3 py-2"><i class="bi bi-shield-check"></i> Logged In ({{ session.get('user_identity') }})</span>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+                <i class="bi bi-lock-fill"></i> Login for Working Mode
+            </a>
+        {% endif %}
+    </div>
+
+    <!-- Header -->
+    <div class="header-card text-center mb-4">
+        <h2 class="fw-bold m-0">JYOTI NIKETAN H.S SCHOOL</h2>
+        <span class="badge bg-light text-dark mt-2 px-3 py-1">N_1_25_18_A_@_ Management System</span>
+    </div>
+
+    <!-- Professional Dynamic Navigation Panel (Dropdowns & Categorized Cards) -->
+    <div class="row g-3 mb-4 no-print">
+        
+        <!-- Category 1: Student Management -->
+        <div class="col-md-4">
+            <div class="nav-section-card h-100">
+                <h6 class="fw-bold text-primary mb-3"><i class="bi bi-people-fill me-1"></i> छात्र प्रबंधन (Students)</h6>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('register_student') }}" class="btn btn-outline-primary btn-sm text-start fw-semibold">
+                        <i class="bi bi-person-plus-fill me-2"></i> Register New Student
+                    </a>
+                    <a href="{{ url_for('student_info_panel') }}" class="btn btn-outline-primary btn-sm text-start fw-semibold">
+                        <i class="bi bi-card-checklist me-2"></i> Student Details Master
+                    </a>
+                    <a href="{{ url_for('student_quick_view') }}" class="btn btn-outline-primary btn-sm text-start fw-semibold">
+                        <i class="bi bi-card-heading me-2"></i> Quick Students View
+                    </a>
+                    <a href="{{ url_for('promote_students') }}" class="btn btn-outline-primary btn-sm text-start fw-semibold">
+                        <i class="bi bi-mortarboard-fill me-2"></i> Promote Students
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 2: Academics & Exams -->
+        <div class="col-md-4">
+            <div class="nav-section-card h-100">
+                <h6 class="fw-bold text-success mb-3"><i class="bi bi-journal-bookmark-fill me-1"></i> परीक्षा व परिणाम (Academics)</h6>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('teacher_panel') }}" class="btn btn-outline-success btn-sm text-start fw-semibold">
+                        <i class="bi bi-pencil-square me-2"></i> Enter Marks (Teacher)
+                    </a>
+                    <a href="{{ url_for('class_result_list', class_name=selected_class or '10th') }}" class="btn btn-outline-success btn-sm text-start fw-semibold">
+                        <i class="bi bi-clipboard-data me-2"></i> Class Result List (Principal)
+                    </a>
+                    <a href="{{ url_for('admit_card_panel') }}" class="btn btn-outline-success btn-sm text-start fw-semibold">
+                        <i class="bi bi-person-vcard me-2"></i> Admit Cards
+                    </a>
+                    <a href="{{ url_for('id_card_generator') }}" class="btn btn-outline-success btn-sm text-start fw-semibold">
+                        <i class="bi bi-person-badge-fill me-2"></i> ID Card Bulk Print
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 3: Attendance & Reports -->
+        <div class="col-md-4">
+            <div class="nav-section-card h-100">
+                <h6 class="fw-bold text-warning mb-3 text-dark"><i class="bi bi-calendar-check-fill me-1"></i> उपस्थिति व रिपोर्ट्स (Attendance)</h6>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('exam_control') }}" class="btn btn-outline-warning btn-sm text-start fw-semibold text-dark">
+                        <i class="bi bi-clipboard-check me-2"></i> Attendance Sheet Daily
+                    </a>
+                    <a href="{{ url_for('student_attendance') }}" class="btn btn-outline-warning btn-sm text-start fw-semibold text-dark">
+                        <i class="bi bi-calendar-check me-2"></i> Student Attendance Entry
+                    </a>
+                    <a href="{{ url_for('attendance_report') }}" class="btn btn-outline-warning btn-sm text-start fw-semibold text-dark">
+                        <i class="bi bi-chart-pie me-1"></i> Student Monthly Attendance
+                    </a>
+                    <a href="{{ url_for('teacher_attendance') }}" class="btn btn-outline-warning btn-sm text-start fw-semibold text-dark">
+                        <i class="bi bi-person-check me-2"></i> Teacher Attendance
+
+                    </a>
+                    <a href="{{ url_for('teacher_attendance_report') }}" class="btn btn-outline-warning btn-sm text-start fw-semibold text-dark">
+                        <i class="bi bi-file-text me-2"></i> Teacher Attendance Report
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+<!-- परीक्षा फॉर्म भरने और प्रिंट करने का नेविगेशन लिंक -->
+<div style="margin: 20px 0; text-align: right;">
+    <a href="/exam_application_form" style="background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+        📝 नया परीक्षा फॉर्म भरें / एडिट करें
+    </a>
+</div>
+
+
+    <!-- Secondary Dropdown Menu Bar for Extra Tools -->
+    <div class="dropdown mb-4 no-print text-center">
+        <button class="btn btn-dark dropdown-toggle px-4 py-2 rounded-pill fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-tools me-2"></i> अन्य प्रबंधन एवं सेटिंग्स (Other Tools & Settings) ⚙️
+        </button>
+        <ul class="dropdown-menu shadow p-2" style="border-radius: 12px; min-width: 250px;">
+            <li><a class="dropdown-item rounded fw-semibold py-2" href="{{ url_for('teachers_panel') }}"><i class="bi bi-person-workspace me-2 text-danger"></i> Teachers Master</a></li>
+            <li><a class="dropdown-item rounded fw-semibold py-2" href="{{ url_for('timetable_view') }}"><i class="bi bi-calendar3 me-2 text-dark"></i> Timetable & Schedule</a></li>
+            <li><a class="dropdown-item rounded fw-semibold py-2" href="{{ url_for('fee_management') }}"><i class="bi bi-credit-card me-2 text-success"></i> Fees Management System</a></li>
+            <li><a class="dropdown-item rounded fw-semibold py-2" href="{{ url_for('tc_management') }}"><i class="bi bi-file-earmark-text me-2 text-warning"></i> TC Management</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item rounded fw-semibold py-2" href="{{ url_for('send_class_msg') }}"><i class="bi bi-chat-dots-fill me-2 text-primary"></i> Send Class WhatsApp Msg</a></li>
+            <li><a class="dropdown-item rounded fw-semibold py-2" href="{{ url_for('send_teacher_msg') }}"><i class="bi bi-envelope-paper-fill me-2 text-info"></i> Notice to Teachers</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item rounded fw-semibold py-2" href="{{ url_for('settings') }}"><i class="bi bi-gear-fill me-2 text-secondary"></i> System Settings</a></li>
+        </ul>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4 no-print">
+        <div class="col-md-4">
+            <div class="stat-card stat-total shadow-sm">
+                <div class="fs-6 text-uppercase">कुल छात्र (Results)</div>
+                <div class="fs-1 fw-bold">{{ stats.total }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card stat-top shadow-sm">
+                <div class="fs-6 text-uppercase">80%+ अंक (Top Performance)</div>
+                <div class="fs-1 fw-bold">{{ stats.above_80 }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card stat-fail shadow-sm">
+                <div class="fs-6 text-uppercase">अनुत्तीर्ण (Fail Students)</div>
+                <div class="fs-1 fw-bold">{{ stats.fail }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search / Filter -->
+    <form method="GET" action="{{ url_for('index') }}" class="row g-2 mb-4 no-print align-items-center bg-light p-3 rounded-3 border shadow-sm">
+        <div class="col-md-3">
+            <select name="class_name" id="classSelect" class="form-select form-select-sm">
+                <option value="">-- सभी कक्षाएं --</option>
+                {% for c in ['Nursery','LKG','UKG','1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th'] %}
+                <option value="{{ c }}" {% if selected_class == c %}selected{% endif %}>Class {{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="filter" class="form-select form-select-sm">
+                <option value="">-- फ़िल्टर चुनें --</option>
+                <option value="above_80" {% if request.args.get('filter')=='above_80' %}selected{% endif %}>80%+ Top Performers</option>
+                <option value="fail" {% if request.args.get('filter')=='fail' %}selected{% endif %}>Fail Students</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="text" name="search" id="searchInput" value="{{ request.args.get('search','') }}" class="form-control form-control-sm" placeholder="Search Name/Roll/Scholar...">
+        </div>
+        <div class="col-md-3 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm w-50 fw-bold">
+                <i class="bi bi-search"></i> Search
+            </button>
+            <button type="button" onclick="triggerBulkPrint()" class="btn btn-dark btn-sm w-50 fw-bold">
+                <i class="bi bi-printer"></i> Bulk Print
+            </button>
+        </div>
+    </form>
+
+    <!-- Results Table -->
+    <h5 class="fw-bold mb-3 text-secondary border-bottom pb-2">
+        <i class="bi bi-table"></i> परीक्षा परिणाम सूची (Results List)
+    </h5>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle main-table">
+            <thead>
+                <tr class="text-center">
+                    <th style="width: 70px;">Roll No</th>
+                    <th style="width: 85px;">Scholar</th>
+                    <th style="width: 160px;">Student Info</th>
+                    <th style="width: 100px;">Class</th>
+                    <th style="min-width: 280px;">Subject-wise Marks (Th + Pr = Total)</th>
+                    <th style="width: 90px;">Percentage</th>
+                    <th style="width: 80px;">Result</th>
+                    <th style="width: 100px;" class="no-print">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td class="fw-bold text-center text-primary">{{ s.roll_no }}</td>
+                    <td class="text-muted text-center fw-semibold">{{ s.scholar_no }}</td>
+                    <td>
+                        <strong class="text-dark">{{ s.name }}</strong><br>
+                        <small class="text-muted"><i class="bi bi-person"></i> F: {{ s.father_name }}</small>
+                    </td>
+                    <td class="text-center fw-semibold">
+                        {{ s.class_name }}
+                        {% if s.group_name and s.class_name in ['11th', '12th'] %}
+                            <br><small class="text-muted">({{ s.group_name }})</small>
+                        {% endif %}
+                    </td>
+
+                    <!-- Formatted Nested Mini Table for Subject Marks -->
+                    <td>
+                        <table class="table table-sm table-bordered marks-mini-table">
+                            <thead>
+                                <tr>
+                                    <th class="text-start">Subject</th>
+                                    <th>Th</th>
+                                    <th>Pr</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sub, marks in s.scores.items() %}
+                                <tr>
+                                    <td class="text-start fw-semibold text-capitalize">{{ sub.replace('_', ' ') }}</td>
+                                    <td class="text-center text-muted">{{ marks.theory }}</td>
+                                    <td class="text-center text-muted">{{ marks.project if marks.project is defined else (marks.practical if marks.practical is defined else 0) }}</td>
+                                    <td class="text-center fw-bold text-dark">{{ marks.total }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </td>
+
+                    <td class="fw-bold text-center fs-6">{{ s.percentage }}%</td>
+                    <td class="text-center">
+                        {% if s.result == 'Pass' %}
+                        <span class="badge bg-success px-2 py-1">PASS</span>
+                        {% else %}
+                        <span class="badge bg-danger px-2 py-1">FAIL</span>
+                        {% endif %}
+                    </td>
+                    <td class="no-print text-center">
+                        <div class="d-flex flex-column gap-1">
+                            <a href="{{ url_for('report_card', id=s.id) }}" target="_blank" class="btn btn-sm btn-outline-primary py-1 fw-semibold">
+                                <i class="bi bi-file-earmark-pdf"></i> Marksheet
+                            </a>
+                            <a href="{{ url_for('delete_student', id=s.id) }}" onclick="return confirm('क्या आप इस छात्र का रिकॉर्ड हटाना चाहते हैं?')" class="btn btn-sm btn-outline-danger py-1 fw-semibold">
+                                <i class="bi bi-trash"></i> Delete
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        <i class="bi bi-info-circle fs-4 d-block mb-1"></i>
+                        कोई छात्र रिकॉर्ड उपलब्ध नहीं है।
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- JavaScript for Dynamic Bulk Print -->
+<script>
+function triggerBulkPrint() {
+    var selectedClass = document.getElementById('classSelect').value;
+    var searchVal = document.getElementById('searchInput').value;
+
+    var url = "{{ url_for('bulk_report_cards') }}?class_name=" + encodeURIComponent(selectedClass) + "&scholar_no=" + encodeURIComponent(searchVal);
+    window.open(url, '_blank');
+}
+</script>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

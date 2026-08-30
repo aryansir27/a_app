@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admit Card & Roll No. Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #eef2f5; margin: 15px; }
+        .card { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn { padding: 8px 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; text-decoration: none; display: inline-block; font-size: 12px; }
+        .btn-success { background: #28a745; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+        th { background: #28a745; color: white; }
+        input[type="text"], input[type="date"] { padding: 5px; border: 1px solid #007bff; border-radius: 4px; font-weight: bold; }
+        
+        .admit-card-box {
+            border: 2px dashed #333;
+            padding: 12px 15px;
+            margin-top: 15px;
+            background: #fff;
+            display: block;
+            box-sizing: border-box;
+        }
+
+        .admit-header {
+            display: grid;
+            grid-template-columns: 50px 1fr 50px;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+        .school-logo { width: 50px; height: 50px; object-fit: contain; }
+        .flex-box { display: flex; justify-content: space-between; align-items: flex-start; }
+        img.student-photo { width: 80px; height: 80px; border: 1px solid #000; object-fit: cover; }
+        img.qr-code { width: 75px; height: 75px; border: 1px solid #000; padding: 2px; }
+
+        @media print {
+            @page { size: A4 portrait; margin: 10mm; }
+            body { background: white; margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            .card { box-shadow: none; padding: 0; max-width: 100%; margin: 0; }
+            .admit-card-box:not(.selected-for-print) { display: none !important; }
+            .admit-card-box {
+                display: block !important;
+                border: 2px solid #000 !important;
+                margin-bottom: 15mm !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            .sign-box { margin-top: 20px !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="no-print">
+            <a href="/register" class="btn" style="background:#6c757d;">← Admission Master</a>
+            <button type="button" onclick="printSelectedCards()" class="btn btn-success" style="float:right;">🖨️ Print Selected Cards</button>
+            <h2>Roll No Assignment & Admit Cards</h2>
+
+            <!-- Class & Group Filter Form -->
+            <form method="GET" action="/admit_card" style="margin-bottom:15px; display:flex; gap:15px; align-items:center;">
+                <div>
+                    <label><b>Select Class:</b></label>
+                    <select name="class_name" style="padding:6px; font-size:14px;" onchange="this.form.submit()">
+                        {% for c in ['Nursery','LKG','UKG','1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th'] %}
+                        <option value="{{ c }}" {% if selected_class == c %}selected{% endif %}>Class {{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- केवल 11th और 12th के लिए Group Filter -->
+                {% if selected_class in ['11th', '12th'] %}
+                <div>
+                    <label><b>Select Group:</b></label>
+                    <select name="stream_group" style="padding:6px; font-size:14px;" onchange="this.form.submit()">
+                        <option value="ALL" {% if selected_group == 'ALL' or not selected_group %}selected{% endif %}>All Groups</option>
+                        <option value="Maths" {% if selected_group == 'Maths' %}selected{% endif %}>Maths Group</option>
+                        <option value="Bio" {% if selected_group == 'Bio' %}selected{% endif %}>Bio Group</option>
+                        <option value="Commerce" {% if selected_group == 'Commerce' %}selected{% endif %}>Commerce Group</option>
+                    </select>
+                </div>
+                {% endif %}
+            </form>
+
+            <!-- Timetable Config Form -->
+            <details open style="background:#f8f9fa; padding:10px; border:1px solid #ccc; border-radius:5px; margin-bottom:15px;">
+                <summary style="font-weight:bold; cursor:pointer; color:#007bff;">
+                    ⚙️ Configure Exam Time Table for Class {{ selected_class }} {% if selected_group and selected_class in ['11th', '12th'] %}({{ selected_group }} Group){% endif %}
+                </summary>
+
+                <form method="POST" action="/save_timetable" style="margin-top:10px;">
+                    <input type="hidden" name="class_name" value="{{ selected_class }}">
+                    {% if selected_group %}
+                    <input type="hidden" name="stream_group" value="{{ selected_group }}">
+                    {% endif %}
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+                        {% for i in range(1, 7) %}
+                            {% set ns = namespace(date='', subject='') %}
+                            {% if timetable %}
+                                {% for row in timetable %}
+                                    {% if row.paper_no == i %}
+                                        {% set ns.date = row.exam_date or row.date or '' %}
+                                        {% set ns.subject = row.subject_name or row.subject or '' %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            <div>
+                                <label><b>Paper {{ i }}:</b></label>
+                                <input type="date" name="date_{{ i }}" value="{{ ns.date }}" style="width:100%; margin-bottom:3px;">
+                                <input type="text" name="subject_{{ i }}" placeholder="Subject Name" value="{{ ns.subject }}" style="width:100%;">
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-success" style="margin-top:10px;">Save Timetable</button>
+                </form>
+            </details>
+
+            <!-- Roll No Bulk Form -->
+            <form method="POST" action="/admit_card?class_name={{ selected_class }}&stream_group={{ selected_group }}">
+                <button type="submit" class="btn btn-success">💾 Save Checked Roll Numbers</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:40px; text-align:center;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" checked title="Select/Deselect All"></th>
+                            <th>Scholar No</th>
+                            <th>Student Name</th>
+                            <th>Father Name</th>
+                            <th>Class</th>
+                            <th>Group</th>
+                            <th>Assign / Edit Roll No</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in students %}
+                        {% set current_class = s.class_name if s.class_name else s.class %}
+                        {% set has_roll = s.roll_no is not none and s.roll_no|string|trim != '' %}
+                        <tr>
+                            <td style="text-align:center;">
+                                <input type="checkbox" name="selected_students" value="{{ s.id }}" class="row-checkbox" data-target="card_{{ s.id }}" id="cb_{{ s.id }}" onchange="updateCardSelection(this)" {% if has_roll %}checked{% endif %}>
+                            </td>
+                            <td>
+                                <input type="hidden" name="student_ids" value="{{ s.id }}">
+                                {{ s.scholar_no }}
+                            </td>
+                            <td>{{ s.name }}</td>
+                            <td>{{ s.father_name }}</td>
+                            <td>{{ current_class }}</td>
+                            <td>
+                                <b>
+                                    {% if current_class in ['11th', '12th'] %}
+                                        {{ s.group_name if s.group_name else (s.stream if s.stream else '-') }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </b>
+                            </td>
+                            <td>
+                                <input type="text" name="roll_{{ s.id }}" class="roll-input" data-cb="cb_{{ s.id }}" data-card="card_{{ s.id }}" value="{{ s.roll_no or '' }}" placeholder="e.g. 1001" style="width:100px;" oninput="handleRollInput(this)" {% if loop.first %}onkeyup="autoFillRollNumbers(this)"{% endif %}>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+            <hr style="margin:30px 0;">
+            <h3 style="text-align:center;">--- Admit Cards Preview Below ---</h3>
+        </div>
+
+        <!-- Admit Cards Printable Section -->
+        {% for s in students %}
+        {% set has_roll = s.roll_no is not none and s.roll_no|string|trim != '' %}
+        <div class="admit-card-box {% if has_roll %}selected-for-print{% endif %}" id="card_{{ s.id }}">
+            <div class="admit-header">
+                <img src="/static/images/logo.png" alt="School Logo" class="school-logo">
+                <div style="text-align: center;">
+                    <h3 style="margin:0; font-size:18px;">JYOTI NIKETAN H.S SCHOOL</h3>
+                    <h5 style="margin:3px 0; font-size:12px;">FIRST TERM EXAMINATION ADMIT CARD (2026)</h5>
+                </div>
+                <div></div>
+            </div>
+
+            <div class="flex-box">
+                <div style="font-size:12px;">
+                    <p style="margin:2px 0;"><b>Student Name:</b> {{ s.name }}</p>
+                    <p style="margin:2px 0;"><b>Father's Name:</b> {{ s.father_name }}</p>
+                    <p style="margin:2px 0;"><b>Scholar No:</b> {{ s.scholar_no }}</p>
+
+                    {% if s.dob %}
+                    {% set dob_parts = s.dob.split('-') %}
+                    {% if dob_parts|length == 3 %}
+                    <p style="margin:2px 0;"><b>Date of Birth:</b> {{ dob_parts[2] }}-{{ dob_parts[1] }}-{{ dob_parts[0] }}</p>
+                    {% else %}
+                    <p style="margin:2px 0;"><b>Date of Birth:</b> {{ s.dob }}</p>
+                    {% endif %}
+                    {% endif %}
+
+                    <p style="margin:2px 0;"><b>Roll No:</b> <span style="font-size:16px; font-weight:bold;" id="disp_roll_{{ s.id }}">{{ s.roll_no or 'Unassigned' }}</span></p>
+                    
+                    {% set current_class = s.class_name if s.class_name else s.class %}
+                    <p style="margin:2px 0;">
+                        <b>Class:</b> {{ current_class }} 
+                        {% if current_class in ['11th', '12th'] %}
+                            {% set grp = s.group_name or s.stream %}
+                            {% if grp %}({{ grp }}){% endif %}
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <div>
+                        {% if s.photo_path %}
+                        <img src="/{{ s.photo_path }}" class="student-photo" alt="Student Photo">
+                        {% else %}
+                        <div style="width:80px; height:80px; border:1px solid #000; text-align:center; line-height:80px; font-size:10px;">Photo</div>
+                        {% endif %}
+                    </div>
+                    <div style="text-align: center;">
+                        <img src="{{ url_for('student_qr', scholar_no=s.scholar_no) }}" alt="QR Code" class="qr-code">
+                        <div style="font-size: 9px; font-weight: bold; margin-top: 2px;">
+                            ID: {{ s.scholar_no }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h5 style="margin:8px 0 4px 0; font-size:11px;">Exam Time Table:</h5>
+            <table style="margin-top:0; font-size:10px;">
+                <thead>
+                    <tr>
+                        <th style="padding:3px 6px;">Paper</th>
+                        <th style="padding:3px 6px;">Date</th>
+                        <th style="padding:3px 6px;">Subject</th>
+                        <th style="padding:3px 6px;">Invigilator Sign</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if timetable and timetable|length > 0 %}
+                        {% for t in timetable %}
+                        <tr>
+                            <td style="padding:3px 6px;">Paper {{ t.paper_no if t.paper_no else loop.index }}</td>
+                            <td style="padding:3px 6px;">{{ t.exam_date if t.exam_date else t.date }}</td>
+                            <td style="padding:3px 6px;">{{ t.subject_name if t.subject_name else t.subject }}</td>
+                            <td style="padding:3px 6px;"></td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" style="text-align:center; padding:4px;">Timetable not configured yet.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+
+            <div class="sign-box" style="display:flex; justify-content:space-between; margin-top:18px; font-size:11px;">
+                <div>Candidate Signature</div>
+                <div>Principal Signature</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+    function handleRollInput(input) {
+        var cbId = input.getAttribute('data-cb');
+        var cardId = input.getAttribute('data-card');
+        var cb = document.getElementById(cbId);
+        var cardBox = document.getElementById(cardId);
+        var dispRoll = document.getElementById('disp_' + cardId.replace('card_', 'roll_'));
+
+        var val = input.value.trim();
+        if (val !== "") {
+            if (dispRoll) dispRoll.textContent = val;
+        } else {
+            if (dispRoll) dispRoll.textContent = 'Unassigned';
+        }
+    }
+
+    function autoFillRollNumbers(firstInput) {
+        var startValue = parseInt(firstInput.value, 10);
+        var inputs = document.querySelectorAll('.roll-input');
+
+        inputs.forEach(function(input, index) {
+            var cbId = input.getAttribute('data-cb');
+            var cb = document.getElementById(cbId);
+
+            // केवल Checked विद्यार्थियों के रोल नंबर Auto-fill होंगे
+            if (cb && cb.checked) {
+                if (!isNaN(startValue)) {
+                    input.value = startValue + index;
+                } else {
+                    input.value = '';
+                }
+                handleRollInput(input);
+            }
+        });
+    }
+
+    function toggleSelectAll(source) {
+        var checkboxes = document.querySelectorAll('.row-checkbox');
+        checkboxes.forEach((cb) => {
+            cb.checked = source.checked;
+            updateCardSelection(cb);
+        });
+    }
+
+    function updateCardSelection(cb) {
+        var cardId = cb.getAttribute('data-target');
+        var cardBox = document.getElementById(cardId);
+        if (cardBox) {
+            if (cb.checked) {
+                cardBox.classList.add('selected-for-print');
+            } else {
+                cardBox.classList.remove('selected-for-print');
+            }
+        }
+    }
+
+    function printSelectedCards() {
+        var checkboxes = document.querySelectorAll('.row-checkbox:checked');
+        if (checkboxes.length === 0) {
+            alert('कृपया प्रिंट करने के लिए कम से कम एक छात्र को चुनें!');
+            return;
+        }
+        window.print();
+    }
+    </script>
+</body>
+</html>
