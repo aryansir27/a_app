@@ -532,6 +532,54 @@ def index():
         })
 
     return render_template('index.html', students=formatted_students, stats={'total': total_students, 'fail': total_fail, 'above_80': total_above_80}, selected_class=class_filter)
+# ==================== ONLINE PUBLIC ADMIT CARD PORTAL ====================
+
+@app.route('/public_admit_card_search')
+def public_admit_card_search():
+    return render_template('public_admit_card_search.html')
+
+@app.route('/check_admit_card', methods=['GET', 'POST'])
+def check_admit_card():
+    search_query = request.values.get('search_query', '').strip()
+
+    if not search_query:
+        flash('⚠️ कृपया स्कॉलर नंबर या रोल नंबर दर्ज करें!', 'danger')
+        return redirect(url_for('public_admit_card_search'))
+
+    conn = get_db_connection()
+
+    # 1. Student Fetch (Student Master se)
+    student = conn.execute(
+        "SELECT * FROM student_master WHERE scholar_no = ? OR roll_no = ?",
+        (search_query, search_query)
+    ).fetchone()
+
+    if not student:
+        conn.close()
+        flash('❌ दर्ज की गई जानकारी का कोई छात्र नहीं मिला!', 'danger')
+        return redirect(url_for('public_admit_card_search'))
+
+    # 2. Timetable Fetch (Class ke anusar)
+    timetable_raw = conn.execute(
+        "SELECT * FROM exam_schedule WHERE class_name = ? ORDER BY paper_no ASC",
+        (student['class_name'],)
+    ).fetchall()
+
+    # 3. Settings Fetch
+    settings_data = conn.execute("SELECT * FROM school_settings WHERE id = 1").fetchone()
+    conn.close()
+
+    timetable = [dict(t) for t in timetable_raw]
+    config = get_school_config()
+
+    return render_template(
+        'public_admit_card.html',
+        student=dict(student),
+        timetable=timetable,
+        settings=dict(settings_data) if settings_data else {},
+        config_data=config,
+        principal_name=config.get('principal_name', 'Principal')
+    )
 
 
 @app.route('/student_quick_view')
