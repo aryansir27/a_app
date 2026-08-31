@@ -126,7 +126,7 @@ def init_db():
         enrollment_code TEXT,
         sambal_no TEXT,
         caste TEXT,
-        medium TEXT DEFAULT 'Hindi',
+        medium TEXT DEFAULT 'English',
         stream TEXT
     )
     ''')
@@ -188,7 +188,7 @@ def init_db():
         'school_code': 'TEXT',
         'enrollment_code': 'TEXT',
         'sambal_no': 'TEXT',
-        'medium': "TEXT DEFAULT 'Hindi'",
+        'medium': "TEXT DEFAULT 'English'",
         'stream': 'TEXT',
         'group_name': 'TEXT'
     }
